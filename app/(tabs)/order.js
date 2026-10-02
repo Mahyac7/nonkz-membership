@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import { useState, useEffect, useCallback } from "react";
+import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius } from "../../constants/theme";
-import { orders, formatRupiah } from "../../constants/data";
+import { getOrders, formatRupiah } from "../../lib/api";
+import { useAuth } from "../../lib/AuthContext";
+import { LoadingState, ErrorState, EmptyState } from "../../components/DataState";
 
 const TABS = [
   { key: "semua", label: "Semua" },
@@ -20,7 +22,27 @@ const STATUS_STYLE = {
 export default function OrderScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user } = useAuth();
   const [tab, setTab] = useState("semua");
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!user) return;
+    setError("");
+    try {
+      setOrders(await getOrders(user.id));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [user]);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const list = tab === "semua" ? orders : orders.filter((o) => o.status === tab);
 
@@ -43,12 +65,21 @@ export default function OrderScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 90 }}>
-        {list.length === 0 ? (
-          <View style={styles.empty}>
-            <Ionicons name="receipt-outline" size={48} color={colors.textMuted} />
-            <Text style={styles.emptyText}>Belum ada pesanan di kategori ini</Text>
-          </View>
+      <ScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: 90, flexGrow: 1 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); load(); }}
+          />
+        }
+      >
+        {loading ? (
+          <LoadingState />
+        ) : error ? (
+          <ErrorState message={error} onRetry={() => { setLoading(true); load(); }} />
+        ) : list.length === 0 ? (
+          <EmptyState icon="receipt-outline" message="Belum ada pesanan di kategori ini" />
         ) : (
           list.map((o) => {
             const s = STATUS_STYLE[o.status];

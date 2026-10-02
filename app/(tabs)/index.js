@@ -1,9 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import { useEffect, useState, useCallback } from "react";
+import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { colors } from "../../constants/theme";
-import { user, promos } from "../../constants/data";
+import { getPromos } from "../../lib/api";
+import { useAuth } from "../../lib/AuthContext";
 import TopHeader from "../../components/TopHeader";
 import MembershipCard from "../../components/MembershipCard";
 import QuickActions from "../../components/QuickActions";
@@ -21,12 +23,37 @@ function greetingText() {
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { profile, refreshProfile } = useAuth();
+  const [promos, setPromos] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const data = await getPromos();
+      setPromos(data);
+    } catch (e) {
+      setPromos([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([load(), refreshProfile()]);
+    setRefreshing(false);
+  }, [load, refreshProfile]);
 
   return (
     <View style={styles.root}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 24 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.white} />
+        }
       >
         {/* Blue gradient top section */}
         <LinearGradient
@@ -37,7 +64,7 @@ export default function HomeScreen() {
 
           <View style={styles.greeting}>
             <Text style={styles.greetSmall}>{greetingText()}</Text>
-            <Text style={styles.greetName}>{user.name}</Text>
+            <Text style={styles.greetName}>{profile?.name ?? "Member"}</Text>
           </View>
 
           <View style={{ paddingHorizontal: 18 }}>

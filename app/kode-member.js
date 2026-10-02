@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius } from "../constants/theme";
-import { user } from "../constants/data";
+import { useAuth } from "../lib/AuthContext";
 import ScreenHeader from "../components/ScreenHeader";
+import { LoadingState } from "../components/DataState";
 
 // Simple deterministic faux-QR grid built from the member id (no extra deps).
 function QrGrid({ seed, size = 21 }) {
@@ -41,6 +42,18 @@ function QrGrid({ seed, size = 21 }) {
 }
 
 export default function KodeMemberScreen() {
+  const { profile } = useAuth();
+
+  if (!profile) {
+    return (
+      <View style={styles.root}>
+        <ScreenHeader title="Kode Member" />
+        <LoadingState />
+      </View>
+    );
+  }
+
+  const user = profile;
   return (
     <View style={styles.root}>
       <ScreenHeader title="Kode Member" />

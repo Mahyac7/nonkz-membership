@@ -1,15 +1,43 @@
+import { useEffect, useState, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius } from "../constants/theme";
-import { outlets } from "../constants/data";
+import { getOutlets } from "../lib/api";
 import ScreenHeader from "../components/ScreenHeader";
+import { LoadingState, ErrorState, EmptyState } from "../components/DataState";
 
 export default function OutletScreen() {
+  const [outlets, setOutlets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    setError("");
+    try {
+      setOutlets(await getOutlets());
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
   return (
     <View style={styles.root}>
       <ScreenHeader title="Outlet" subtitle={`${outlets.length} outlet terdekat`} />
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {outlets.map((o) => (
+      <ScrollView contentContainerStyle={{ padding: 16, flexGrow: 1 }}>
+        {loading ? (
+          <LoadingState />
+        ) : error ? (
+          <ErrorState message={error} onRetry={() => { setLoading(true); load(); }} />
+        ) : outlets.length === 0 ? (
+          <EmptyState icon="storefront-outline" message="Belum ada outlet" />
+        ) : (
+          outlets.map((o) => (
           <View key={o.id} style={styles.card}>
             <View style={styles.row}>
               <View style={styles.pin}>
@@ -45,7 +73,8 @@ export default function OutletScreen() {
               <Text style={styles.dirText}>Lihat Rute</Text>
             </Pressable>
           </View>
-        ))}
+          ))
+        )}
       </ScrollView>
     </View>
   );

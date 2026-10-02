@@ -3,10 +3,21 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { colors, radius } from "../constants/theme";
-import { user, formatRupiah } from "../constants/data";
+import { formatRupiah } from "../lib/api";
+import { useAuth } from "../lib/AuthContext";
 
 export default function MembershipCard() {
   const router = useRouter();
+  const { profile } = useAuth();
+  const user = profile ?? {
+    tier: "Classic",
+    nextTier: "Signature",
+    points: 0,
+    coupons: 0,
+    cardNumber: "NKZ •••• •••• •••",
+    spendToNextLevel: 800000,
+    tierProgress: 0,
+  };
 
   return (
     <LinearGradient

@@ -1,15 +1,48 @@
+import { useEffect, useState, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius } from "../constants/theme";
-import { vouchers } from "../constants/data";
+import { getVouchers } from "../lib/api";
+import { useAuth } from "../lib/AuthContext";
 import ScreenHeader from "../components/ScreenHeader";
+import { LoadingState, ErrorState, EmptyState } from "../components/DataState";
 
 export default function VoucherScreen() {
+  const { user } = useAuth();
+  const [vouchers, setVouchers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    if (!user) return;
+    setError("");
+    try {
+      setVouchers(await getVouchers(user.id));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const activeCount = vouchers.filter((v) => v.status === "active").length;
+
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Voucher Saya" subtitle={`${vouchers.filter((v) => v.status === "active").length} voucher aktif`} />
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {vouchers.map((v) => {
+      <ScreenHeader title="Voucher Saya" subtitle={`${activeCount} voucher aktif`} />
+      <ScrollView contentContainerStyle={{ padding: 16, flexGrow: 1 }}>
+        {loading ? (
+          <LoadingState />
+        ) : error ? (
+          <ErrorState message={error} onRetry={() => { setLoading(true); load(); }} />
+        ) : vouchers.length === 0 ? (
+          <EmptyState icon="ticket-outline" message="Belum ada voucher" />
+        ) : (
+          vouchers.map((v) => {
           const used = v.status === "used";
           return (
             <View key={v.id} style={[styles.ticket, used && styles.ticketUsed]}>
@@ -34,7 +67,8 @@ export default function VoucherScreen() {
               </Pressable>
             </View>
           );
-        })}
+          })
+        )}
       </ScrollView>
     </View>
   );

@@ -12,7 +12,8 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { colors, radius } from "../constants/theme";
-import { user } from "../constants/data";
+import { updateProfile } from "../lib/api";
+import { useAuth } from "../lib/AuthContext";
 import ScreenHeader from "../components/ScreenHeader";
 
 function Field({ label, value, onChangeText, placeholder, keyboardType }) {
@@ -33,16 +34,32 @@ function Field({ label, value, onChangeText, placeholder, keyboardType }) {
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const [name, setName] = useState(user.name);
-  const [phone, setPhone] = useState(user.phone);
-  const [email, setEmail] = useState(user.email);
+  const { user, profile, refreshProfile } = useAuth();
+  const [name, setName] = useState(profile?.name ?? "");
+  const [phone, setPhone] = useState(profile?.phone ?? "");
+  const [email, setEmail] = useState(profile?.email ?? "");
   const [birth, setBirth] = useState("");
   const [gender, setGender] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const save = () => {
-    Alert.alert("Tersimpan", "Profil berhasil diperbarui.", [
-      { text: "OK", onPress: () => (router.canGoBack() ? router.back() : router.replace("/")) },
-    ]);
+  const save = async () => {
+    setSaving(true);
+    try {
+      await updateProfile(user.id, {
+        name: name.trim(),
+        initial: name.trim() ? name.trim()[0].toUpperCase() : "M",
+        phone,
+        profile_completion: 1.0,
+      });
+      await refreshProfile();
+      Alert.alert("Tersimpan", "Profil berhasil diperbarui.", [
+        { text: "OK", onPress: () => (router.canGoBack() ? router.back() : router.replace("/")) },
+      ]);
+    } catch (e) {
+      Alert.alert("Gagal", e.message || "Tidak dapat menyimpan profil.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -54,7 +71,9 @@ export default function EditProfileScreen() {
       <ScrollView contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
         <View style={styles.avatarWrap}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user.initial}</Text>
+            <Text style={styles.avatarText}>
+              {(name || profile?.name || "M").trim()[0]?.toUpperCase() || "M"}
+            </Text>
           </View>
           <Text style={styles.changePhoto}>Ubah foto</Text>
         </View>
@@ -84,8 +103,8 @@ export default function EditProfileScreen() {
           <Field label="Jenis Kelamin" value={gender} onChangeText={setGender} placeholder="Pria / Wanita" />
         </View>
 
-        <Pressable style={styles.saveBtn} onPress={save}>
-          <Text style={styles.saveText}>Simpan Perubahan</Text>
+        <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={save} disabled={saving}>
+          <Text style={styles.saveText}>{saving ? "Menyimpan..." : "Simpan Perubahan"}</Text>
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>

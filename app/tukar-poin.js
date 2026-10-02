@@ -1,59 +1,101 @@
+import { useEffect, useState, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius } from "../constants/theme";
-import { user, rewards } from "../constants/data";
+import { getRewards, redeemReward } from "../lib/api";
+import { useAuth } from "../lib/AuthContext";
 import ScreenHeader from "../components/ScreenHeader";
+import { LoadingState, ErrorState } from "../components/DataState";
 
 export default function TukarPoinScreen() {
-  const redeem = (r) => {
-    if (user.points < r.cost) {
+  const { user, profile, refreshProfile } = useAuth();
+  const [rewards, setRewards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(null);
+
+  const points = profile?.points ?? 0;
+
+  const load = useCallback(async () => {
+    setError("");
+    try {
+      setRewards(await getRewards());
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const redeem = async (r) => {
+    if (points < r.cost) {
       Alert.alert("Poin kurang", `Butuh ${r.cost} poin untuk menukar ${r.name}.`);
       return;
     }
-    Alert.alert("Berhasil", `Kamu menukar ${r.cost} poin dengan ${r.name}.`);
+    setBusy(r.id);
+    try {
+      await redeemReward(user.id, r, points);
+      await refreshProfile();
+      Alert.alert("Berhasil", `Kamu menukar ${r.cost} poin dengan ${r.name}.`);
+    } catch (e) {
+      Alert.alert("Gagal", e.message || "Terjadi kesalahan.");
+    } finally {
+      setBusy(null);
+    }
   };
 
   return (
     <View style={styles.root}>
       <ScreenHeader
         title="Tukar Poin"
-        subtitle={`Saldo: ${user.points.toLocaleString("id-ID")} poin`}
+        subtitle={`Saldo: ${points.toLocaleString("id-ID")} poin`}
         right={
           <View style={styles.pointPill}>
             <Ionicons name="pricetag" size={13} color={colors.white} />
-            <Text style={styles.pointPillText}>{user.points.toLocaleString("id-ID")}</Text>
+            <Text style={styles.pointPillText}>{points.toLocaleString("id-ID")}</Text>
           </View>
         }
       />
 
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <View style={styles.grid}>
-          {rewards.map((r) => {
-            const enough = user.points >= r.cost;
-            return (
-              <View key={r.id} style={styles.card}>
-                <View style={styles.iconWrap}>
-                  <Ionicons name={r.icon} size={26} color={colors.cardBlue} />
-                </View>
-                <Text style={styles.name} numberOfLines={2}>
-                  {r.name}
-                </Text>
-                <View style={styles.costRow}>
-                  <Ionicons name="pricetag" size={12} color={colors.gold} />
-                  <Text style={styles.cost}>{r.cost.toLocaleString("id-ID")}</Text>
-                </View>
-                <Pressable
-                  style={[styles.btn, !enough && styles.btnDisabled]}
-                  onPress={() => redeem(r)}
-                >
-                  <Text style={[styles.btnText, !enough && styles.btnTextDisabled]}>
-                    {enough ? "Tukar" : "Kurang"}
+      <ScrollView contentContainerStyle={{ padding: 16, flexGrow: 1 }}>
+        {loading ? (
+          <LoadingState />
+        ) : error ? (
+          <ErrorState message={error} onRetry={() => { setLoading(true); load(); }} />
+        ) : (
+          <View style={styles.grid}>
+            {rewards.map((r) => {
+              const enough = points >= r.cost;
+              return (
+                <View key={r.id} style={styles.card}>
+                  <View style={styles.iconWrap}>
+                    <Ionicons name={r.icon} size={26} color={colors.cardBlue} />
+                  </View>
+                  <Text style={styles.name} numberOfLines={2}>
+                    {r.name}
                   </Text>
-                </Pressable>
-              </View>
-            );
-          })}
-        </View>
+                  <View style={styles.costRow}>
+                    <Ionicons name="pricetag" size={12} color={colors.gold} />
+                    <Text style={styles.cost}>{r.cost.toLocaleString("id-ID")}</Text>
+                  </View>
+                  <Pressable
+                    style={[styles.btn, (!enough || busy === r.id) && styles.btnDisabled]}
+                    onPress={() => redeem(r)}
+                    disabled={!enough || busy === r.id}
+                  >
+                    <Text style={[styles.btnText, !enough && styles.btnTextDisabled]}>
+                      {busy === r.id ? "..." : enough ? "Tukar" : "Kurang"}
+                    </Text>
+                  </Pressable>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
     </View>
   );

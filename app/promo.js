@@ -1,36 +1,64 @@
+import { useEffect, useState, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { colors, radius } from "../constants/theme";
-import { promos } from "../constants/data";
+import { getPromos } from "../lib/api";
 import ScreenHeader from "../components/ScreenHeader";
+import { LoadingState, ErrorState, EmptyState } from "../components/DataState";
 
 export default function PromoScreen() {
   const router = useRouter();
+  const [promos, setPromos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    setError("");
+    try {
+      setPromos(await getPromos());
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <View style={styles.root}>
       <ScreenHeader title="Promo" subtitle="Semua promo yang tersedia" />
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {promos.map((p) => (
-          <Pressable
-            key={p.id}
-            style={styles.card}
-            onPress={() => router.push({ pathname: "/promo-detail", params: { id: p.id } })}
-          >
-            <View style={[styles.badge, { backgroundColor: p.color }]}>
-              <Text style={styles.badgeText}>{p.discount}</Text>
-            </View>
-            <View style={{ flex: 1, marginLeft: 14 }}>
-              <Text style={styles.title}>{p.title}</Text>
-              <Text style={styles.desc} numberOfLines={2}>
-                {p.desc}
-              </Text>
-              <Text style={styles.expiry}>Berlaku s/d {p.expiry}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-          </Pressable>
-        ))}
+      <ScrollView contentContainerStyle={{ padding: 16, flexGrow: 1 }}>
+        {loading ? (
+          <LoadingState />
+        ) : error ? (
+          <ErrorState message={error} onRetry={() => { setLoading(true); load(); }} />
+        ) : promos.length === 0 ? (
+          <EmptyState icon="pricetags-outline" message="Belum ada promo" />
+        ) : (
+          promos.map((p) => (
+            <Pressable
+              key={p.id}
+              style={styles.card}
+              onPress={() => router.push({ pathname: "/promo-detail", params: { id: p.id } })}
+            >
+              <View style={[styles.badge, { backgroundColor: p.color }]}>
+                <Text style={styles.badgeText}>{p.discount}</Text>
+              </View>
+              <View style={{ flex: 1, marginLeft: 14 }}>
+                <Text style={styles.title}>{p.title}</Text>
+                <Text style={styles.desc} numberOfLines={2}>
+                  {p.desc}
+                </Text>
+                <Text style={styles.expiry}>Berlaku s/d {p.expiry}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </Pressable>
+          ))
+        )}
       </ScrollView>
     </View>
   );
