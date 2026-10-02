@@ -14,6 +14,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.nonkz.membership",
       "adaptiveIcon": {
         "backgroundColor": "#1E3FB4"
       }
