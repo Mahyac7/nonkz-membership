@@ -7,6 +7,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Needed so the workflow can create GitHub Releases.
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     name: Build release APK
@@ -59,9 +63,30 @@ jobs:
           mkdir -p artifacts
           cp android/app/build/outputs/apk/release/app-release.apk artifacts/nonkz-membership.apk
 
+      # Keep uploading the artifact too (useful for PR builds).
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: nonkz-membership-apk
           path: artifacts/nonkz-membership.apk
           if-no-files-found: error
+
+      # --- Auto release: only on push to main (not on PRs) ---
+      - name: Compute release tag
+        if: github.event_name != 'pull_request'
+        id: tag
+        run: echo "value=v1.0.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release with APK
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.value }}
+          name: Nonkz Membership ${{ steps.tag.outputs.value }}
+          body: |
+            APK rilis otomatis dari commit `${{ github.sha }}`.
+
+            **Download:** klik `nonkz-membership.apk` di bawah (Assets), lalu install di Android.
+            Tidak perlu login GitHub dan tidak perlu unzip.
+          files: artifacts/nonkz-membership.apk
+          make_latest: true
