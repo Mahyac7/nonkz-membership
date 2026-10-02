@@ -1,20 +1,21 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { colors, radius } from "../constants/theme";
-
-const ACTIONS = [
-  { key: "promo", label: "Promo", icon: "pricetags", color: colors.red },
-  { key: "tukar", label: "Tukar Poin", icon: "gift", color: colors.gold },
-  { key: "voucher", label: "Voucher", icon: "checkbox", color: colors.purple },
-  { key: "outlet", label: "Outlet", icon: "storefront", color: colors.green },
-  { key: "referal", label: "Referal", icon: "person-add", color: colors.accentBlue },
-];
+import { quickActions } from "../constants/data";
 
 export default function QuickActions() {
+  const router = useRouter();
+
   return (
     <View style={styles.card}>
-      {ACTIONS.map((a) => (
-        <Pressable key={a.key} style={styles.item}>
+      {quickActions.map((a) => (
+        <Pressable
+          key={a.key}
+          style={styles.item}
+          onPress={() => router.push(a.route)}
+          android_ripple={{ color: "rgba(0,0,0,0.05)", borderless: true }}
+        >
           <View style={[styles.iconWrap, { backgroundColor: a.color }]}>
             <Ionicons name={a.icon} size={22} color={colors.white} />
           </View>
