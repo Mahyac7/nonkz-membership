@@ -3,14 +3,15 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { colors, radius } from "../constants/theme";
-import { user } from "../constants/data";
+import { useAuth } from "../lib/AuthContext";
 
 export default function CompleteProfilePill() {
   const router = useRouter();
+  const { profile } = useAuth();
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
 
-  const pct = Math.round(user.profileCompletion * 100);
+  const pct = Math.round((profile?.profileCompletion ?? 0.75) * 100);
 
   return (
     <View style={styles.wrap}>

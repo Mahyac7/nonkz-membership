@@ -1,16 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import { colors, radius } from "../constants/theme";
-import { promos } from "../constants/data";
+import { getPromos } from "../lib/api";
 import ScreenHeader from "../components/ScreenHeader";
+import { LoadingState } from "../components/DataState";
 
 export default function PromoDetailScreen() {
   const { id } = useLocalSearchParams();
-  const promo = promos.find((p) => p.id === id) || promos[0];
+  const [promo, setPromo] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [claimed, setClaimed] = useState(false);
+
+  useEffect(() => {
+    getPromos()
+      .then((list) => setPromo(list.find((p) => p.id === id) || list[0] || null))
+      .catch(() => setPromo(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading || !promo) {
+    return (
+      <View style={styles.root}>
+        <ScreenHeader title="Detail Promo" />
+        <LoadingState />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>

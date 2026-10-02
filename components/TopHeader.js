@@ -2,15 +2,16 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { colors, radius } from "../constants/theme";
-import { user } from "../constants/data";
+import { useAuth } from "../lib/AuthContext";
 
 export default function TopHeader() {
   const router = useRouter();
+  const { profile } = useAuth();
 
   return (
     <View style={styles.wrap}>
       <Pressable style={styles.avatar} onPress={() => router.push("/(tabs)/profile")}>
-        <Text style={styles.avatarText}>{user.initial}</Text>
+        <Text style={styles.avatarText}>{profile?.initial ?? "M"}</Text>
       </Pressable>
 
       <View style={styles.brand}>

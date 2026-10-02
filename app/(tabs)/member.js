@@ -1,20 +1,52 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import { useState, useCallback } from "react";
+import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius } from "../../constants/theme";
-import { user, tierBenefits, pointHistory, formatRupiah } from "../../constants/data";
+import { tierBenefits, getPointHistory, formatRupiah } from "../../lib/api";
+import { useAuth } from "../../lib/AuthContext";
+import { LoadingState } from "../../components/DataState";
 
 export default function MemberScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user: authUser, profile, refreshProfile } = useAuth();
+  const [pointHistory, setPointHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
+  const load = useCallback(async () => {
+    if (!authUser) return;
+    try {
+      const [, hist] = await Promise.all([refreshProfile(), getPointHistory(authUser.id)]);
+      setPointHistory(hist);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [authUser, refreshProfile]);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  if (loading || !profile) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top + 40 }]}>
+        <LoadingState />
+      </View>
+    );
+  }
+
+  const user = profile;
   return (
     <ScrollView
       style={styles.root}
       contentContainerStyle={{ paddingBottom: 90 }}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />
+      }
     >
       <LinearGradient
         colors={[colors.bgTop, colors.bgDeep]}

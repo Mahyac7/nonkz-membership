@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import { colors, radius } from "../constants/theme";
-import { orders, formatRupiah } from "../constants/data";
+import { getOrders, formatRupiah } from "../lib/api";
+import { useAuth } from "../lib/AuthContext";
 import ScreenHeader from "../components/ScreenHeader";
+import { LoadingState } from "../components/DataState";
 
 const STATUS_STYLE = {
   selesai: { bg: "#E3F6EF", fg: colors.green, label: "Selesai" },
@@ -12,7 +15,27 @@ const STATUS_STYLE = {
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams();
-  const order = orders.find((o) => o.id === id) || orders[0];
+  const { user } = useAuth();
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    getOrders(user.id)
+      .then((list) => setOrder(list.find((o) => o.id === id) || list[0] || null))
+      .catch(() => setOrder(null))
+      .finally(() => setLoading(false));
+  }, [user, id]);
+
+  if (loading || !order) {
+    return (
+      <View style={styles.root}>
+        <ScreenHeader title="Detail Pesanan" />
+        <LoadingState />
+      </View>
+    );
+  }
+
   const s = STATUS_STYLE[order.status];
   const subtotal = order.items.reduce((a, i) => a + i.price * i.qty, 0);
 

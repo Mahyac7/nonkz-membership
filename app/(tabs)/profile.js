@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius } from "../../constants/theme";
-import { user } from "../../constants/data";
+import { useAuth } from "../../lib/AuthContext";
 
 const MENU = [
   { icon: "person-outline", label: "Edit Profil", route: "/edit-profile", color: colors.cardBlue },
@@ -19,11 +19,21 @@ const MENU = [
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { profile, signOut } = useAuth();
+  const user = profile ?? {
+    name: "Member",
+    initial: "M",
+    phone: "",
+    tier: "Classic",
+    points: 0,
+    coupons: 0,
+    joined: "-",
+  };
 
   const logout = () =>
     Alert.alert("Keluar", "Yakin ingin keluar dari akun?", [
       { text: "Batal", style: "cancel" },
-      { text: "Keluar", style: "destructive" },
+      { text: "Keluar", style: "destructive", onPress: () => signOut() },
     ]);
 
   return (
