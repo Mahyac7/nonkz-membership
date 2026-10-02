@@ -1,9 +1,13 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { colors, radius } from "../constants/theme";
+import { user, formatRupiah } from "../constants/data";
 
 export default function MembershipCard() {
+  const router = useRouter();
+
   return (
     <LinearGradient
       colors={["#3A61E0", "#2342BE"]}
@@ -13,20 +17,20 @@ export default function MembershipCard() {
     >
       {/* Top row */}
       <View style={styles.topRow}>
-        <View style={styles.memberLeft}>
+        <Pressable style={styles.memberLeft} onPress={() => router.push("/(tabs)/member")}>
           <View style={styles.heartCircle}>
             <Ionicons name="heart" size={20} color={colors.white} />
           </View>
           <View style={{ marginLeft: 12 }}>
             <Text style={styles.memberLabel}>MEMBER</Text>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Text style={styles.memberTier}>Classic</Text>
+              <Text style={styles.memberTier}>{user.tier}</Text>
               <Ionicons name="chevron-forward" size={16} color={colors.white} />
             </View>
           </View>
-        </View>
+        </Pressable>
 
-        <Pressable style={styles.codeBtn}>
+        <Pressable style={styles.codeBtn} onPress={() => router.push("/kode-member")}>
           <Ionicons name="qr-code-outline" size={16} color={colors.cardBlue} />
           <Text style={styles.codeBtnText}>Kode Member</Text>
         </Pressable>
@@ -34,35 +38,37 @@ export default function MembershipCard() {
 
       {/* Points + coupon */}
       <View style={styles.pointsRow}>
-        <View>
+        <Pressable onPress={() => router.push("/tukar-poin")}>
           <Text style={styles.pointsLabel}>Saldo poin</Text>
           <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
             <View style={styles.coin}>
               <Ionicons name="pricetag" size={12} color={colors.white} />
             </View>
-            <Text style={styles.pointsValue}>0</Text>
+            <Text style={styles.pointsValue}>{user.points.toLocaleString("id-ID")}</Text>
           </View>
-        </View>
+        </Pressable>
 
-        <Pressable style={styles.couponPill}>
+        <Pressable style={styles.couponPill} onPress={() => router.push("/voucher")}>
           <Ionicons name="ticket-outline" size={14} color={colors.white} />
-          <Text style={styles.couponText}>3 kupon</Text>
+          <Text style={styles.couponText}>{user.coupons} kupon</Text>
         </Pressable>
       </View>
 
       {/* Progress */}
       <View style={styles.levelRow}>
-        <Text style={styles.levelText}>Classic</Text>
-        <Text style={styles.levelText}>Signature</Text>
+        <Text style={styles.levelText}>{user.tier}</Text>
+        <Text style={styles.levelText}>{user.nextTier}</Text>
       </View>
       <View style={styles.track}>
-        <View style={styles.fill} />
+        <View style={[styles.fill, { width: `${user.tierProgress * 100}%` }]} />
       </View>
-      <Text style={styles.progressNote}>Belanja Rp 800.000 lagi untuk naik level</Text>
+      <Text style={styles.progressNote}>
+        Belanja {formatRupiah(user.spendToNextLevel)} lagi untuk naik level
+      </Text>
 
       {/* Card number */}
       <View style={styles.numberRow}>
-        <Text style={styles.cardNumber}>NKZ 8235 4860 208</Text>
+        <Text style={styles.cardNumber}>{user.cardNumber}</Text>
         <View style={styles.brandMini}>
           <Ionicons name="add" size={12} color={colors.red} />
           <Text style={styles.brandMiniText}>Nonkz</Text>
@@ -136,7 +142,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     overflow: "hidden",
   },
-  fill: { width: "28%", height: "100%", borderRadius: 3, backgroundColor: colors.gold },
+  fill: { height: "100%", borderRadius: 3, backgroundColor: colors.gold },
   progressNote: { color: colors.textLightMuted, fontSize: 12, marginTop: 10 },
   numberRow: {
     flexDirection: "row",

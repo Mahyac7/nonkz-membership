@@ -1,15 +1,24 @@
+import { useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { colors, radius } from "../constants/theme";
+import { user } from "../constants/data";
 
 export default function CompleteProfilePill() {
+  const router = useRouter();
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) return null;
+
+  const pct = Math.round(user.profileCompletion * 100);
+
   return (
     <View style={styles.wrap}>
-      <Pressable style={styles.close}>
+      <Pressable style={styles.close} onPress={() => setDismissed(true)} hitSlop={10}>
         <Ionicons name="close" size={14} color={colors.textMuted} />
       </Pressable>
 
-      <View style={styles.row}>
+      <Pressable style={styles.row} onPress={() => router.push("/edit-profile")}>
         <View style={styles.iconWrap}>
           <Ionicons name="person-circle" size={26} color={colors.gold} />
         </View>
@@ -18,16 +27,16 @@ export default function CompleteProfilePill() {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <Text style={styles.title}>Lengkapi profil</Text>
             <View style={styles.pct}>
-              <Text style={styles.pctText}>75%</Text>
+              <Text style={styles.pctText}>{pct}%</Text>
             </View>
           </View>
           <Text style={styles.sub}>2 data lagi, dapat reward</Text>
         </View>
 
-        <Pressable style={styles.arrow}>
+        <View style={styles.arrow}>
           <Ionicons name="arrow-forward" size={18} color={colors.white} />
-        </Pressable>
-      </View>
+        </View>
+      </Pressable>
     </View>
   );
 }

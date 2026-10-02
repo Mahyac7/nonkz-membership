@@ -1,15 +1,26 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { colors } from "../../constants/theme";
+import { user, promos } from "../../constants/data";
 import TopHeader from "../../components/TopHeader";
 import MembershipCard from "../../components/MembershipCard";
 import QuickActions from "../../components/QuickActions";
 import PromoBanner from "../../components/PromoBanner";
 import CompleteProfilePill from "../../components/CompleteProfilePill";
 
+function greetingText() {
+  const h = new Date().getHours();
+  if (h < 11) return "Selamat pagi,";
+  if (h < 15) return "Selamat siang,";
+  if (h < 19) return "Selamat sore,";
+  return "Selamat malam,";
+}
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   return (
     <View style={styles.root}>
@@ -25,8 +36,8 @@ export default function HomeScreen() {
           <TopHeader />
 
           <View style={styles.greeting}>
-            <Text style={styles.greetSmall}>Selamat malam,</Text>
-            <Text style={styles.greetName}>Halo</Text>
+            <Text style={styles.greetSmall}>{greetingText()}</Text>
+            <Text style={styles.greetName}>{user.name}</Text>
           </View>
 
           <View style={{ paddingHorizontal: 18 }}>
@@ -45,7 +56,7 @@ export default function HomeScreen() {
           {/* Promo buat kamu section */}
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Promo buat kamu</Text>
-            <Pressable>
+            <Pressable onPress={() => router.push("/promo")}>
               <Text style={styles.seeAll}>Lihat semua</Text>
             </Pressable>
           </View>
@@ -56,18 +67,18 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ gap: 12, paddingVertical: 14, paddingRight: 18 }}
           >
-            {[
-              { d: "20%", t: "Diskon Minuman", c: "#2F56D8" },
-              { d: "Rp 10rb", t: "Cashback Poin", c: "#1BA784" },
-              { d: "Buy 1", t: "Get 1 Free", c: "#E23744" },
-            ].map((p, i) => (
-              <View key={i} style={[styles.promoCard, { backgroundColor: p.c }]}>
-                <Text style={styles.promoDiscount}>{p.d}</Text>
-                <Text style={styles.promoTitle}>{p.t}</Text>
+            {promos.map((p) => (
+              <Pressable
+                key={p.id}
+                style={[styles.promoCard, { backgroundColor: p.color }]}
+                onPress={() => router.push({ pathname: "/promo-detail", params: { id: p.id } })}
+              >
+                <Text style={styles.promoDiscount}>{p.discount}</Text>
+                <Text style={styles.promoTitle}>{p.title}</Text>
                 <View style={styles.promoBtn}>
                   <Text style={styles.promoBtnText}>Klaim</Text>
                 </View>
-              </View>
+              </Pressable>
             ))}
           </ScrollView>
         </View>

@@ -1,13 +1,17 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { colors, radius } from "../constants/theme";
+import { user } from "../constants/data";
 
 export default function TopHeader() {
+  const router = useRouter();
+
   return (
     <View style={styles.wrap}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>H</Text>
-      </View>
+      <Pressable style={styles.avatar} onPress={() => router.push("/(tabs)/profile")}>
+        <Text style={styles.avatarText}>{user.initial}</Text>
+      </Pressable>
 
       <View style={styles.brand}>
         <Ionicons name="add" size={18} color={colors.red} />
@@ -16,11 +20,11 @@ export default function TopHeader() {
       </View>
 
       <View style={styles.actions}>
-        <Pressable style={styles.iconBtn}>
+        <Pressable style={styles.iconBtn} onPress={() => router.push("/notifikasi")}>
           <Ionicons name="notifications-outline" size={20} color={colors.white} />
           <View style={styles.badge} />
         </Pressable>
-        <Pressable style={styles.iconBtn}>
+        <Pressable style={styles.iconBtn} onPress={() => router.push("/(tabs)/profile")}>
           <Ionicons name="ellipsis-horizontal" size={20} color={colors.white} />
         </Pressable>
       </View>
