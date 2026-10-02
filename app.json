@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Nonkz Membership",
+    "slug": "nonkz-membership",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "nonkz",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#1E3FB4"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1E3FB4"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}
